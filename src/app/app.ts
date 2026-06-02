@@ -24,43 +24,68 @@ export class App implements AfterViewInit, OnDestroy {
   private readonly targetVol = 0.35;
   private fadeTimer: ReturnType<typeof setInterval> | undefined;
 
+  /** Пользователь осознанно выключил музыку — больше не включаем её автоматически */
+  private userOptedOut = false;
+  private autoStart?: () => void;
+  private readonly autoEvents = ['pointerdown', 'keydown', 'touchstart'];
+
   ngAfterViewInit(): void {
     const audio = this.audio();
     if (!audio) return;
     audio.volume = 0;
     // Пытаемся включить сразу; если браузер блокирует автозвук —
-    // запускаем при первом касании/клике/нажатии клавиши.
-    this.play();
-    const onFirst = () => this.play();
-    ['pointerdown', 'keydown', 'touchstart'].forEach((ev) =>
-      window.addEventListener(ev, onFirst, { once: true }),
-    );
+    // запускаем при первом действии пользователя (но только пока он не отказался).
+    this.startPlayback();
+    this.autoStart = () => this.startPlayback();
+    this.autoEvents.forEach((ev) => window.addEventListener(ev, this.autoStart!));
+  }
+
+  private removeAutoStart(): void {
+    if (!this.autoStart) return;
+    this.autoEvents.forEach((ev) => window.removeEventListener(ev, this.autoStart!));
+    this.autoStart = undefined;
   }
 
   protected toggleMusic(): void {
     const audio = this.audio();
     if (!audio) return;
     if (this.musicOn()) {
+      // явное выключение — гасим и больше не автозапускаем
+      this.userOptedOut = true;
+      this.removeAutoStart();
       this.stopFade();
       audio.pause();
       this.musicOn.set(false);
     } else {
-      this.play();
+      // явное включение
+      this.userOptedOut = false;
+      this.startPlayback();
     }
   }
 
-  private play(): void {
+  private startPlayback(): void {
+    if (this.userOptedOut) {
+      this.removeAutoStart();
+      return;
+    }
     const audio = this.audio();
     if (!audio || this.musicOn()) return;
     audio.volume = 0;
     audio
       .play()
       .then(() => {
+        if (this.userOptedOut) {
+          // успели выключить, пока промис резолвился — останавливаем
+          audio.pause();
+          this.musicOn.set(false);
+          return;
+        }
         this.musicOn.set(true);
         this.fadeIn(audio);
+        this.removeAutoStart();
       })
       .catch(() => {
-        /* автозвук заблокирован — стартуем при первом действии пользователя */
+        /* всё ещё заблокировано — ждём следующего действия пользователя */
       });
   }
 
@@ -87,5 +112,6 @@ export class App implements AfterViewInit, OnDestroy {
 
   ngOnDestroy(): void {
     this.stopFade();
+    this.removeAutoStart();
   }
 }
