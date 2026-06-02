@@ -194,18 +194,23 @@ export class DoneScreen implements OnInit, OnDestroy {
     this.state.sending.set(true);
     this.state.error.set(null);
 
-    const payload = {
-      access_key: WEB3FORMS_ACCESS_KEY,
-      subject: '🎉 Наташа сказала ДА! Детали свидания',
-      from_name: 'Сайт-приглашение для Наташи',
-      'Дата': this.state.prettyDate(this.state.dateIso()!),
-      'Время': this.state.time(),
-      'Чем заняться': this.state.chosenTitles(),
-      'Комментарий Наташи': this.state.comment() || '—',
-    };
-
     try {
-      const data = await this.post(payload);
+      const meta = await this.collectMeta();
+      const message =
+        `Наташа согласилась пойти на свидание! 🎉\n\n` +
+        `📅 Когда: ${this.state.prettyDate(this.state.dateIso()!)} в ${this.state.time()}\n` +
+        `🎯 Чем заняться: ${this.state.chosenTitles()}\n` +
+        `💬 Комментарий Наташи: ${this.state.comment() || '—'}\n\n` +
+        `🚗 Заехать за ней на машине.\n` +
+        `Это свидание №${this.state.meetings().length + 1}.`;
+
+      const data = await this.post({
+        access_key: WEB3FORMS_ACCESS_KEY,
+        subject: '💘 Наташа согласилась на свидание!',
+        from_name: 'Свидание с Наташей',
+        message,
+        ...meta,
+      });
       if (!data.success) throw new Error(data.message || 'submit failed');
       this.state.addCurrentAsMeeting();
       this.celebrate();
@@ -220,18 +225,21 @@ export class DoneScreen implements OnInit, OnDestroy {
     this.cancelingId.set(m.id);
     this.cancelError.set(null);
 
-    const payload = {
-      access_key: WEB3FORMS_ACCESS_KEY,
-      subject: '❌ Свидание отменено',
-      from_name: 'Сайт-приглашение для Наташи',
-      'Отменённое свидание': `${this.state.prettyDate(m.dateIso)} в ${m.time}`,
-      'Что планировалось': this.state.titlesFor(m.activities, m.customActivity),
-    };
-
     // Письмо — по возможности (оно уходит на сервере, даже если ответ не дочитался).
     // Саму отмену применяем в любом случае, чтобы свидание точно пропало из списка.
     try {
-      await this.post(payload);
+      const meta = await this.collectMeta();
+      const message =
+        `Наташа отменила свидание ❌\n\n` +
+        `📅 Было назначено: ${this.state.prettyDate(m.dateIso)} в ${m.time}\n` +
+        `🎯 Планировалось: ${this.state.titlesFor(m.activities, m.customActivity)}`;
+      await this.post({
+        access_key: WEB3FORMS_ACCESS_KEY,
+        subject: '❌ Наташа отменила свидание',
+        from_name: 'Свидание с Наташей',
+        message,
+        ...meta,
+      });
     } catch {
       /* не блокируем отмену из-за сетевого сбоя при чтении ответа */
     }
@@ -247,16 +255,20 @@ export class DoneScreen implements OnInit, OnDestroy {
     this.noteError.set(null);
 
     const next = this.state.meetings()[0];
-    const payload = {
-      access_key: WEB3FORMS_ACCESS_KEY,
-      subject: '✉️ Наташа написала по свиданию (детали/перенос)',
-      from_name: 'Сайт-приглашение для Наташи',
-      'Сообщение от Наташи': text,
-      'Свидание': next ? `${this.state.prettyDate(next.dateIso)} в ${next.time}` : '—',
-    };
-
     try {
-      const data = await this.post(payload);
+      const meta = await this.collectMeta();
+      const message =
+        `Наташа написала по свиданию ✉️\n\n` +
+        `«${text}»\n\n` +
+        `📅 Ближайшее свидание: ${next ? `${this.state.prettyDate(next.dateIso)} в ${next.time}` : '—'}`;
+
+      const data = await this.post({
+        access_key: WEB3FORMS_ACCESS_KEY,
+        subject: '✉️ Сообщение от Наташи (детали/перенос)',
+        from_name: 'Свидание с Наташей',
+        message,
+        ...meta,
+      });
       if (!data.success) throw new Error(data.message || 'note failed');
       this.note.set('');
       this.noteSent.set(true);
@@ -265,6 +277,37 @@ export class DoneScreen implements OnInit, OnDestroy {
     } finally {
       this.noteSending.set(false);
     }
+  }
+
+  /** Техническая инфа об отправителе — чтобы понимать, откуда пришло письмо */
+  private async collectMeta(): Promise<Record<string, string>> {
+    const meta: Record<string, string> = {};
+    try {
+      meta['Устройство'] = navigator.userAgent;
+      meta['Язык'] = navigator.language;
+      meta['Экран'] = `${screen.width}×${screen.height}`;
+      meta['Часовой пояс'] = Intl.DateTimeFormat().resolvedOptions().timeZone;
+      meta['Время отправки'] = new Date().toLocaleString('ru-RU');
+      meta['Страница'] = location.href;
+    } catch {
+      /* недоступно — не критично */
+    }
+    try {
+      const ctrl = new AbortController();
+      const t = setTimeout(() => ctrl.abort(), 3500);
+      const res = await fetch('https://ipwho.is/', { signal: ctrl.signal });
+      clearTimeout(t);
+      const d = await res.json();
+      if (d && d.success !== false) {
+        if (d.ip) meta['IP-адрес'] = d.ip;
+        const place = [d.city, d.region, d.country].filter(Boolean).join(', ');
+        if (place) meta['Откуда (примерно)'] = place;
+        if (d.connection?.isp) meta['Провайдер'] = d.connection.isp;
+      }
+    } catch {
+      /* геолокация недоступна (например, заблокирована) — пропускаем */
+    }
+    return meta;
   }
 
   private async post(payload: Record<string, unknown>): Promise<{ success: boolean; message?: string }> {
