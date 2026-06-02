@@ -1,7 +1,21 @@
-<main class="page">
-  <section class="card">
-    <h1>{{ title() }}</h1>
-    <p class="subtitle">Тестовая страница на Angular работает 🎉</p>
-    <p class="hint">Если ты видишь это — Angular-приложение успешно собралось и запустилось.</p>
-  </section>
+<audio id="bg-music" src="music.mp3" loop preload="none"></audio>
+
+<button class="music-btn" (click)="toggleMusic()" [attr.aria-label]="muted() ? 'Включить музыку' : 'Выключить музыку'">
+  {{ muted() ? '🔈' : '🎵' }}
+</button>
+
+<div class="beam" aria-hidden="true">
+  <div class="beam-track"></div>
+  <div class="beam-figure" [style.left.%]="progress()">🤸‍♀️</div>
+</div>
+
+<main class="stage">
+  <div class="card">
+    @switch (state.step()) {
+      @case ('ask') { <app-ask /> }
+      @case ('when') { <app-when /> }
+      @case ('what') { <app-what /> }
+      @case ('done') { <app-done /> }
+    }
+  </div>
 </main>
