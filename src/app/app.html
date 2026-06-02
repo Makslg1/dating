@@ -8,12 +8,19 @@
   {{ musicOn() ? '🎵' : '🔇' }}
 </button>
 
-<div class="beam" aria-hidden="true">
-  <div class="beam-track"></div>
-  <div class="beam-figure" [style.left.%]="progress()">
-    <span class="gym-bob"><span class="gym-spin">🤸‍♀️</span></span>
-  </div>
-</div>
+<nav class="steps" aria-label="Прогресс">
+  <div class="steps-track"><div class="steps-fill" [style.width.%]="progress()"></div></div>
+  <ol class="steps-list">
+    @for (s of steps; track s.key; let i = $index) {
+      <li class="step" [class.done]="i < stepIndex()" [class.active]="i === stepIndex()">
+        <span class="dot">
+          @if (i === steps.length - 1) { <span class="dot-heart">♥</span> }
+        </span>
+        <span class="label">{{ s.label }}</span>
+      </li>
+    }
+  </ol>
+</nav>
 
 <main class="stage">
   <div class="card">

@@ -15,11 +15,16 @@ export class App implements AfterViewInit, OnDestroy {
   protected readonly state = inject(DateState);
   protected readonly musicOn = signal(false);
 
-  private readonly order = ['ask', 'when', 'what', 'done'];
-  protected readonly progress = computed(() => {
-    const i = this.order.indexOf(this.state.step());
-    return (i / (this.order.length - 1)) * 100;
-  });
+  protected readonly steps = [
+    { key: 'ask', label: 'Вопрос' },
+    { key: 'when', label: 'Когда' },
+    { key: 'what', label: 'Что' },
+    { key: 'done', label: 'Готово' },
+  ];
+  protected readonly stepIndex = computed(() =>
+    Math.max(0, this.steps.findIndex((s) => s.key === this.state.step())),
+  );
+  protected readonly progress = computed(() => (this.stepIndex() / (this.steps.length - 1)) * 100);
 
   private readonly targetVol = 0.35;
   private fadeTimer: ReturnType<typeof setInterval> | undefined;
