@@ -1,4 +1,4 @@
-import { Component, inject } from '@angular/core';
+import { Component, computed, inject } from '@angular/core';
 import { ACTIVITIES, DateState } from '../date-state';
 
 @Component({
@@ -21,11 +21,32 @@ import { ACTIVITIES, DateState } from '../date-state';
             </div>
           </button>
         }
+
+        <button class="card custom" [class.active]="isCustom()" (click)="state.toggleActivity('custom')">
+          <div class="custom-row">
+            <span class="custom-emoji">✏️</span>
+            <div class="body">
+              <span class="title">Свой вариант</span>
+              <span class="joke">Есть идея получше? Удиви меня 😍</span>
+            </div>
+            @if (isCustom()) { <span class="check inline">✓</span> }
+          </div>
+        </button>
       </div>
+
+      @if (isCustom()) {
+        <input
+          class="custom-input"
+          type="text"
+          placeholder="Например: сходить на каток ⛸️"
+          [value]="state.customActivity()"
+          (input)="state.customActivity.set($any($event.target).value)"
+        />
+      }
 
       <div class="nav">
         <button class="btn ghost" (click)="state.goto('when')">← назад</button>
-        <button class="btn primary" [disabled]="!state.activities().length" (click)="state.goto('done')">
+        <button class="btn primary" [disabled]="!canNext()" (click)="state.goto('done')">
           Дальше →
         </button>
       </div>
@@ -72,6 +93,22 @@ import { ACTIVITIES, DateState } from '../date-state';
       .title { font-weight: 900; font-size: 1.1rem; }
       .joke { color: var(--ink-soft); font-weight: 600; font-size: 0.92rem; }
       .nav { display: flex; justify-content: space-between; align-items: center; margin-top: 1rem; gap: 0.5rem; }
+      .card.custom { box-shadow: 0 8px 22px rgba(214, 51, 91, 0.14); }
+      .custom-row { display: flex; align-items: center; gap: 0.7rem; padding: 0.9rem; position: relative; }
+      .custom-emoji { font-size: 1.8rem; }
+      .check.inline { position: static; margin-left: auto; }
+      .custom-input {
+        width: 100%;
+        margin-top: 0.7rem;
+        border: 2px solid #fff;
+        border-radius: 16px;
+        padding: 0.85rem 1rem;
+        font-family: inherit;
+        font-size: 1rem;
+        outline: none;
+        background: #fff;
+      }
+      .custom-input:focus { border-color: var(--rose); }
       @media (min-width: 720px) {
         .cards { grid-template-columns: 1fr 1fr; }
       }
@@ -81,4 +118,16 @@ import { ACTIVITIES, DateState } from '../date-state';
 export class WhatScreen {
   readonly state = inject(DateState);
   readonly activities = ACTIVITIES;
+
+  readonly isCustom = computed(() => this.state.activities().includes('custom'));
+
+  readonly canNext = computed(() => {
+    const acts = this.state.activities();
+    if (!acts.length) return false;
+    // если выбран только «свой вариант» — нужен непустой текст
+    if (acts.includes('custom') && !this.state.customActivity().trim()) {
+      return acts.some((a) => a !== 'custom');
+    }
+    return true;
+  });
 }

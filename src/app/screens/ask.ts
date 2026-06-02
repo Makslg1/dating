@@ -8,7 +8,17 @@ import { COMPLIMENTS, DateState } from '../date-state';
     <section class="screen">
       <div class="hero">
         @if (!photoError()) {
-          <img class="avatar" [src]="photoSrc()" alt="Максим" (error)="photoError.set(true)" />
+          <div class="avatar-wrap">
+            @for (p of photos; track p; let i = $index) {
+              <img
+                class="avatar layer"
+                [class.show]="i === photoIndex()"
+                [src]="p"
+                alt="Максим"
+                (error)="photoError.set(true)"
+              />
+            }
+          </div>
         } @else {
           <div class="avatar fallback">🙋‍♂️</div>
         }
@@ -54,6 +64,7 @@ import { COMPLIMENTS, DateState } from '../date-state';
         gap: 0.6rem;
       }
       .hero { display: flex; flex-direction: column; align-items: center; gap: 0.5rem; }
+      .avatar-wrap { position: relative; width: 168px; height: 168px; }
       .avatar {
         width: 168px;
         height: 168px;
@@ -63,6 +74,15 @@ import { COMPLIMENTS, DateState } from '../date-state';
         box-shadow: 0 10px 28px rgba(255, 77, 109, 0.4);
         background: var(--cream);
       }
+      .avatar.layer {
+        position: absolute;
+        inset: 0;
+        width: 100%;
+        height: 100%;
+        opacity: 0;
+        transition: opacity 1.1s ease-in-out;
+      }
+      .avatar.layer.show { opacity: 1; }
       .avatar.fallback {
         display: flex;
         align-items: center;
@@ -103,7 +123,7 @@ import { COMPLIMENTS, DateState } from '../date-state';
       .about .small { font-size: 0.9rem; color: var(--ink-soft); margin-top: 0.4rem; }
       @media (min-width: 720px) {
         .question { font-size: 2.6rem; }
-        .avatar { width: 210px; height: 210px; }
+        .avatar-wrap, .avatar { width: 210px; height: 210px; }
       }
     `,
   ],
@@ -112,7 +132,7 @@ export class AskScreen implements OnInit, OnDestroy {
   readonly state = inject(DateState);
   readonly photoError = signal(false);
   readonly photos = ['maksim.jpg', 'maksim2.jpg'];
-  readonly photoSrc = signal(this.photos[0]);
+  readonly photoIndex = signal(0);
   readonly compliment = signal(COMPLIMENTS[0]);
   readonly noIndex = signal(0);
   readonly fled = signal(false);
@@ -131,7 +151,6 @@ export class AskScreen implements OnInit, OnDestroy {
 
   private timer: ReturnType<typeof setInterval> | undefined;
   private ci = 0;
-  private pi = 0;
 
   yesScale(): number {
     return Math.min(1 + this.noIndex() * 0.12, 1.8);
@@ -141,9 +160,8 @@ export class AskScreen implements OnInit, OnDestroy {
     this.timer = setInterval(() => {
       this.ci = (this.ci + 1) % COMPLIMENTS.length;
       this.compliment.set(COMPLIMENTS[this.ci]);
-      this.pi = (this.pi + 1) % this.photos.length;
-      this.photoSrc.set(this.photos[this.pi]);
-    }, 2600);
+      this.photoIndex.update((i) => (i + 1) % this.photos.length);
+    }, 3500);
   }
 
   ngOnDestroy(): void {

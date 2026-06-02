@@ -74,6 +74,7 @@ export class DateState {
   readonly dateIso = signal<string | null>(null);
   readonly time = signal<string | null>(null);
   readonly activities = signal<string[]>([]);
+  readonly customActivity = signal('');
   readonly comment = signal('');
   readonly sending = signal(false);
   readonly sent = signal(false);
@@ -166,8 +167,12 @@ export class DateState {
   }
 
   chosenTitles(): string {
-    return ACTIVITIES.filter((a) => this.activities().includes(a.id))
-      .map((a) => `${a.emoji} ${a.title}`)
-      .join(', ');
+    const parts = ACTIVITIES.filter((a) => this.activities().includes(a.id)).map(
+      (a) => `${a.emoji} ${a.title}`,
+    );
+    if (this.activities().includes('custom') && this.customActivity().trim()) {
+      parts.push(`✏️ Свой вариант: ${this.customActivity().trim()}`);
+    }
+    return parts.join(', ');
   }
 }

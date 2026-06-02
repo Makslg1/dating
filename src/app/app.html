@@ -1,7 +1,7 @@
 <audio id="bg-music" src="music.mp3" loop preload="none"></audio>
 
-<button class="music-btn" (click)="toggleMusic()" [attr.aria-label]="muted() ? 'Включить музыку' : 'Выключить музыку'">
-  {{ muted() ? '🔈' : '🎵' }}
+<button class="music-btn" (click)="toggleMusic()" [attr.aria-label]="musicOn() ? 'Выключить музыку' : 'Включить музыку'">
+  {{ musicOn() ? '🎵' : '🔇' }}
 </button>
 
 <div class="beam" aria-hidden="true">
