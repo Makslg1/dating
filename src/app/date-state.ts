@@ -23,6 +23,15 @@ export interface Slot {
   disabled: boolean;
 }
 
+export interface Meeting {
+  id: string;
+  dateIso: string;
+  time: string;
+  activities: string[];
+  customActivity: string;
+  comment: string;
+}
+
 export const ACTIVITIES: Activity[] = [
   {
     id: 'bike',
@@ -77,10 +86,14 @@ export class DateState {
   readonly customActivity = signal('');
   readonly comment = signal('');
   readonly sending = signal(false);
-  readonly sent = signal(false);
   readonly error = signal<string | null>(null);
 
-  private readonly STORAGE_KEY = 'natasha-date-v1';
+  /** Подтверждённые свидания */
+  readonly meetings = signal<Meeting[]>([]);
+  /** На экране 'done' показываем список встреч (true) или форму нового свидания (false) */
+  readonly showList = signal(false);
+
+  private readonly STORAGE_KEY = 'natasha-dates-v2';
 
   constructor() {
     this.restore();
@@ -90,36 +103,65 @@ export class DateState {
     return typeof localStorage !== 'undefined' ? localStorage : null;
   }
 
-  /** Сохраняем ответ, чтобы при повторном заходе сразу показать обратный отсчёт */
+  /** Сохраняем список свиданий, чтобы при повторном заходе сразу показать их и отсчёт */
   persist(): void {
-    this.storage?.setItem(
-      this.STORAGE_KEY,
-      JSON.stringify({
-        dateIso: this.dateIso(),
-        time: this.time(),
-        activities: this.activities(),
-        customActivity: this.customActivity(),
-        comment: this.comment(),
-      }),
-    );
+    this.storage?.setItem(this.STORAGE_KEY, JSON.stringify(this.meetings()));
   }
 
   private restore(): void {
     try {
       const raw = this.storage?.getItem(this.STORAGE_KEY);
       if (!raw) return;
-      const d = JSON.parse(raw);
-      if (!d?.dateIso || !d?.time) return;
-      this.dateIso.set(d.dateIso);
-      this.time.set(d.time);
-      this.activities.set(Array.isArray(d.activities) ? d.activities : []);
-      this.customActivity.set(d.customActivity ?? '');
-      this.comment.set(d.comment ?? '');
-      this.sent.set(true);
-      this.step.set('done');
+      const arr = JSON.parse(raw);
+      if (!Array.isArray(arr) || !arr.length) return;
+      this.meetings.set(arr.filter((m) => m?.dateIso && m?.time));
+      if (this.meetings().length) {
+        this.showList.set(true);
+        this.step.set('done');
+      }
     } catch {
       /* битые данные — игнорируем */
     }
+  }
+
+  private newId(): string {
+    if (typeof crypto !== 'undefined' && crypto.randomUUID) return crypto.randomUUID();
+    return `${Date.now()}-${this.meetings().length}`;
+  }
+
+  /** Добавляем текущий выбор как новое свидание */
+  addCurrentAsMeeting(): void {
+    const iso = this.dateIso();
+    const t = this.time();
+    if (!iso || !t) return;
+    const meeting: Meeting = {
+      id: this.newId(),
+      dateIso: iso,
+      time: t,
+      activities: [...this.activities()],
+      customActivity: this.customActivity(),
+      comment: this.comment(),
+    };
+    this.meetings.update((list) => [...list, meeting]);
+    this.persist();
+    this.showList.set(true);
+  }
+
+  cancelMeeting(id: string): void {
+    this.meetings.update((list) => list.filter((m) => m.id !== id));
+    this.persist();
+  }
+
+  /** Сброс текущего выбора и переход к началу — чтобы запланировать ещё свидание */
+  planAnother(): void {
+    this.dateIso.set(null);
+    this.time.set(null);
+    this.activities.set([]);
+    this.customActivity.set('');
+    this.comment.set('');
+    this.error.set(null);
+    this.showList.set(false);
+    this.goto('ask');
   }
 
   goto(s: Step): void {
@@ -199,22 +241,24 @@ export class DateState {
   }
 
   /** Локальная дата+время в объект Date для отсчёта */
-  targetDate(): Date | null {
-    const iso = this.dateIso();
-    const t = this.time();
-    if (!iso || !t) return null;
+  toDate(iso: string, t: string): Date {
     const [y, m, dd] = iso.split('-').map(Number);
     const [hh, mm] = t.split(':').map(Number);
     return new Date(y, m - 1, dd, hh, mm, 0, 0);
   }
 
-  chosenTitles(): string {
-    const parts = ACTIVITIES.filter((a) => this.activities().includes(a.id)).map(
+  titlesFor(activities: string[], custom: string): string {
+    const parts = ACTIVITIES.filter((a) => activities.includes(a.id)).map(
       (a) => `${a.emoji} ${a.title}`,
     );
-    if (this.activities().includes('custom') && this.customActivity().trim()) {
-      parts.push(`✏️ Свой вариант: ${this.customActivity().trim()}`);
+    if (activities.includes('custom') && custom.trim()) {
+      parts.push(`✏️ Свой вариант: ${custom.trim()}`);
     }
     return parts.join(', ');
+  }
+
+  /** Заголовки для текущего (ещё не подтверждённого) выбора */
+  chosenTitles(): string {
+    return this.titlesFor(this.activities(), this.customActivity());
   }
 }

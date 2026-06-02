@@ -1,6 +1,6 @@
 import { Component, OnDestroy, OnInit, inject, signal } from '@angular/core';
 import confetti from 'canvas-confetti';
-import { DateState } from '../date-state';
+import { DateState, Meeting } from '../date-state';
 
 const WEB3FORMS_ACCESS_KEY = '840fe769-2c44-404f-b82d-46808569b683';
 const WEB3FORMS_URL = 'https://api.web3forms.com/submit';
@@ -8,7 +8,7 @@ const WEB3FORMS_URL = 'https://api.web3forms.com/submit';
 @Component({
   selector: 'app-done',
   template: `
-    @if (!state.sent()) {
+    @if (!state.showList()) {
       <section class="screen">
         <h2>Почти всё! 🎀</h2>
         <div class="summary">
@@ -38,13 +38,27 @@ const WEB3FORMS_URL = 'https://api.web3forms.com/submit';
       <section class="screen celebrate">
         <div class="big">🎉</div>
         <h2>Ты сделала мой день!</h2>
-        <p>Я уже считаю минуты до встречи. До скорого! 😍</p>
-        <div class="card-final">
-          <p>📅 {{ state.prettyDate(state.dateIso()!) }} в {{ state.time() }}</p>
-          <p>🎯 {{ state.chosenTitles() }}</p>
-        </div>
-        <p class="cd-label">До нашего свидания осталось:</p>
-        <div class="countdown">{{ countdown() }}</div>
+
+        @if (state.meetings().length) {
+          <p>{{ state.meetings().length === 1 ? 'Наше свидание' : 'Наши свидания' }} 💕</p>
+          @for (m of state.meetings(); track m.id) {
+            <div class="card-final meeting">
+              <p class="m-date">📅 {{ state.prettyDate(m.dateIso) }} в {{ m.time }}</p>
+              <p>🎯 {{ state.titlesFor(m.activities, m.customActivity) }}</p>
+              @if (m.comment) { <p class="m-note">💬 {{ m.comment }}</p> }
+              <p class="m-cd">⏳ {{ countdowns()[m.id] }}</p>
+              <button class="btn ghost cancel" [disabled]="cancelingId() === m.id" (click)="cancel(m)">
+                {{ cancelingId() === m.id ? 'Отменяю…' : '✕ Отменить это свидание' }}
+              </button>
+            </div>
+          }
+        } @else {
+          <p>Свиданий пока нет 🤷 Запланируем новое? 😊</p>
+        }
+
+        @if (cancelError()) { <p class="err">{{ cancelError() }}</p> }
+
+        <button class="btn primary plan" (click)="state.planAnother()">➕ В начало — запланировать ещё</button>
 
         <div class="reschedule">
           <p class="cd-label">Нужно уточнить детали или перенести? Напиши — Максиму придёт сообщение:</p>
@@ -100,19 +114,25 @@ const WEB3FORMS_URL = 'https://api.web3forms.com/submit';
         background: rgba(255, 255, 255, 0.8);
         border-radius: var(--radius);
         padding: 1rem;
-        font-weight: 800;
+        font-weight: 700;
         width: 100%;
       }
-      .cd-label { color: var(--ink-soft); font-weight: 700; margin: 0; }
-      .countdown {
+      .meeting { display: flex; flex-direction: column; gap: 0.3rem; }
+      .m-date { font-weight: 900; font-size: 1.05rem; }
+      .m-note { color: var(--ink-soft); font-style: italic; }
+      .m-cd {
         font-family: "Caveat", cursive;
-        font-size: 2.4rem;
+        font-size: 1.7rem;
         font-weight: 700;
         color: var(--rose);
+        margin: 0.2rem 0;
       }
+      .cancel { color: #b00038; font-weight: 800; align-self: center; padding: 0.4rem 0.8rem; }
+      .plan { width: 100%; }
+      .cd-label { color: var(--ink-soft); font-weight: 700; margin: 0; }
       .reschedule {
         width: 100%;
-        margin-top: 0.8rem;
+        margin-top: 0.4rem;
         padding-top: 1rem;
         border-top: 1px solid rgba(255, 77, 109, 0.25);
         display: flex;
@@ -130,7 +150,10 @@ const WEB3FORMS_URL = 'https://api.web3forms.com/submit';
 })
 export class DoneScreen implements OnInit, OnDestroy {
   readonly state = inject(DateState);
-  readonly countdown = signal('');
+
+  readonly countdowns = signal<Record<string, string>>({});
+  readonly cancelingId = signal<string | null>(null);
+  readonly cancelError = signal<string | null>(null);
 
   readonly note = signal('');
   readonly noteSending = signal(false);
@@ -140,8 +163,26 @@ export class DoneScreen implements OnInit, OnDestroy {
   private timer: ReturnType<typeof setInterval> | undefined;
 
   ngOnInit(): void {
-    // Если ответ уже сохранён (повторный заход) — сразу запускаем отсчёт
-    if (this.state.sent()) this.startCountdown();
+    this.tick();
+    this.timer = setInterval(() => this.tick(), 1000);
+  }
+
+  private tick(): void {
+    const map: Record<string, string> = {};
+    for (const m of this.state.meetings()) {
+      map[m.id] = this.format(this.state.toDate(m.dateIso, m.time));
+    }
+    this.countdowns.set(map);
+  }
+
+  private format(target: Date): string {
+    const diff = target.getTime() - Date.now();
+    if (diff <= 0) return 'уже пора! 🥳';
+    const d = Math.floor(diff / 86400000);
+    const h = Math.floor((diff % 86400000) / 3600000);
+    const m = Math.floor((diff % 3600000) / 60000);
+    const s = Math.floor((diff % 60000) / 1000);
+    return `${d} дн ${h} ч ${m} мин ${s} сек`;
   }
 
   async submit(): Promise<void> {
@@ -161,12 +202,36 @@ export class DoneScreen implements OnInit, OnDestroy {
     try {
       const data = await this.post(payload);
       if (!data.success) throw new Error(data.message || 'submit failed');
-      this.state.persist();
+      this.state.addCurrentAsMeeting();
       this.celebrate();
     } catch {
       this.state.error.set('Не получилось отправить 😢 Проверь интернет и попробуй ещё раз.');
     } finally {
       this.state.sending.set(false);
+    }
+  }
+
+  async cancel(m: Meeting): Promise<void> {
+    this.cancelingId.set(m.id);
+    this.cancelError.set(null);
+
+    const payload = {
+      access_key: WEB3FORMS_ACCESS_KEY,
+      subject: '❌ Свидание отменено',
+      from_name: 'Сайт-приглашение для Наташи',
+      'Отменённое свидание': `${this.state.prettyDate(m.dateIso)} в ${m.time}`,
+      'Что планировалось': this.state.titlesFor(m.activities, m.customActivity),
+    };
+
+    try {
+      const data = await this.post(payload);
+      if (!data.success) throw new Error(data.message || 'cancel failed');
+      this.state.cancelMeeting(m.id);
+      this.tick();
+    } catch {
+      this.cancelError.set('Не получилось отменить 😢 Проверь интернет и попробуй ещё раз.');
+    } finally {
+      this.cancelingId.set(null);
     }
   }
 
@@ -176,12 +241,13 @@ export class DoneScreen implements OnInit, OnDestroy {
     this.noteSending.set(true);
     this.noteError.set(null);
 
+    const next = this.state.meetings()[0];
     const payload = {
       access_key: WEB3FORMS_ACCESS_KEY,
       subject: '✉️ Наташа написала по свиданию (детали/перенос)',
       from_name: 'Сайт-приглашение для Наташи',
       'Сообщение от Наташи': text,
-      'Текущая дата свидания': `${this.state.prettyDate(this.state.dateIso()!)} в ${this.state.time()}`,
+      'Свидание': next ? `${this.state.prettyDate(next.dateIso)} в ${next.time}` : '—',
     };
 
     try {
@@ -206,36 +272,10 @@ export class DoneScreen implements OnInit, OnDestroy {
   }
 
   private celebrate(): void {
-    this.state.sent.set(true);
     const burst = () => confetti({ particleCount: 120, spread: 100, origin: { y: 0.5 } });
     burst();
     setTimeout(burst, 400);
     setTimeout(burst, 800);
-    this.startCountdown();
-  }
-
-  private startCountdown(): void {
-    if (this.timer) return;
-    const tick = () => {
-      const target = this.state.targetDate();
-      if (!target) {
-        this.countdown.set('');
-        return;
-      }
-      const diff = target.getTime() - Date.now();
-      if (diff <= 0) {
-        this.countdown.set('Уже пора! 🥳');
-        if (this.timer) clearInterval(this.timer);
-        return;
-      }
-      const d = Math.floor(diff / 86400000);
-      const h = Math.floor((diff % 86400000) / 3600000);
-      const m = Math.floor((diff % 3600000) / 60000);
-      const s = Math.floor((diff % 60000) / 1000);
-      this.countdown.set(`${d} дн ${h} ч ${m} мин ${s} сек`);
-    };
-    tick();
-    this.timer = setInterval(tick, 1000);
   }
 
   ngOnDestroy(): void {
