@@ -6,7 +6,7 @@
   },
   "newProjectRoot": "projects",
   "projects": {
-    "dating-tmp": {
+    "dating": {
       "projectType": "application",
       "schematics": {},
       "root": "",
@@ -56,10 +56,10 @@
           "builder": "@angular/build:dev-server",
           "configurations": {
             "production": {
-              "buildTarget": "dating-tmp:build:production"
+              "buildTarget": "dating:build:production"
             },
             "development": {
-              "buildTarget": "dating-tmp:build:development"
+              "buildTarget": "dating:build:development"
             }
           },
           "defaultConfiguration": "development"
