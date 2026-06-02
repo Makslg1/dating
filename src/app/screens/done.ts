@@ -38,7 +38,6 @@ const WEB3FORMS_URL = 'https://api.web3forms.com/submit';
       <section class="screen celebrate">
         <div class="big">🎉</div>
         <h2>Ты сделала мой день!</h2>
-        <img class="done-meme" src="giphy.gif" alt="" />
         <p>Я уже считаю минуты до встречи. До скорого! 😍</p>
         <div class="card-final">
           <p>📅 {{ state.prettyDate(state.dateIso()!) }} в {{ state.time() }}</p>
@@ -97,12 +96,6 @@ const WEB3FORMS_URL = 'https://api.web3forms.com/submit';
 
       .celebrate { text-align: center; align-items: center; }
       .big { font-size: 4rem; animation: pop 0.6s ease; }
-      .done-meme {
-        width: 200px;
-        max-width: 70%;
-        border-radius: 16px;
-        box-shadow: 0 10px 26px rgba(0, 0, 0, 0.22);
-      }
       .card-final {
         background: rgba(255, 255, 255, 0.8);
         border-radius: var(--radius);
