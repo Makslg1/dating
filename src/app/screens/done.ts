@@ -15,7 +15,7 @@ const WEB3FORMS_URL = 'https://api.web3forms.com/submit';
           <p><span>📅</span> {{ state.prettyDate(state.dateIso()!) }}</p>
           <p><span>⏰</span> {{ state.time() }}</p>
           <p><span>🎯</span> {{ state.chosenTitles() }}</p>
-          <p><span>🚗</span> Заеду за тобой на машине — можно даже собираться лениво</p>
+          <p><span>🚗</span> Заеду на Camry или встретимся на месте — как тебе удобнее</p>
         </div>
 
         <textarea
@@ -201,7 +201,7 @@ export class DoneScreen implements OnInit, OnDestroy {
         `📅 Когда: ${this.state.prettyDate(this.state.dateIso()!)} в ${this.state.time()}\n` +
         `🎯 Чем заняться: ${this.state.chosenTitles()}\n` +
         `💬 Комментарий Наташи: ${this.state.comment() || '—'}\n\n` +
-        `🚗 Заехать за ней на машине.\n` +
+        `🚗 Заехать на Camry или встретить на месте — как ей удобнее.\n` +
         `Это свидание №${this.state.meetings().length + 1}.`;
 
       const data = await this.post({

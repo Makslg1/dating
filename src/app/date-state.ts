@@ -34,6 +34,13 @@ export interface Meeting {
 
 export const ACTIVITIES: Activity[] = [
   {
+    id: 'coffee',
+    emoji: '☕',
+    title: 'Сходить на кофе',
+    img: 'activities/coffee.jpg',
+    joke: 'Ни к чему не обязывает — кроме хорошего настроения 😊',
+  },
+  {
     id: 'bike',
     emoji: '🚲',
     title: 'Покататься на велике',

@@ -29,7 +29,7 @@ import { GifPlayer } from '../gif-player';
 
       <p class="compliment accent-font">{{ compliment() }}</p>
 
-      <h1 class="question">Наташа,<br />пойдёшь со мной<br />на свидание?</h1>
+      <h1 class="question">Наташа, пойдёшь со мной на свидание?</h1>
 
       <div class="buttons">
         <button class="btn yes" [style.fontSize.rem]="yesFontRem()" (click)="yes()">
@@ -52,11 +52,15 @@ import { GifPlayer } from '../gif-player';
       }
 
       <div class="about">
+        <p>Меня зовут Максим, я программист — поэтому и собрал для тебя этот сайт 😎</p>
         <p>
-          Я программист, так что собрать сайтик мне несложно 😎 Тебе — весело, а
-          мне — приятно. Идеальная сделка, правда?
+          Честно: вживую мы пока не виделись, но твой инстаграм меня зацепил — и
+          захотелось познакомиться по-настоящему. Обещаю: будет легко, весело и без неловкости.
         </p>
-        <p class="small">P.S. у меня есть машина — заеду за тобой сам 🚗</p>
+        <p class="small">🚗 Могу заехать на своей Camry или встретить на месте — как тебе спокойнее.</p>
+        @if (!carError()) {
+          <img class="car" src="camry.jpg" alt="Моя Camry" loading="lazy" (error)="carError.set(true)" />
+        }
       </div>
 
       @if (celebrating()) {
@@ -122,7 +126,9 @@ import { GifPlayer } from '../gif-player';
         font-weight: 600;
         margin: 0.1rem 0 0;
         color: var(--ink);
-        line-height: 1.05;
+        line-height: 1.1;
+        text-wrap: balance;
+        max-width: 12ch;
       }
       .buttons {
         display: flex;
@@ -171,6 +177,8 @@ import { GifPlayer } from '../gif-player';
         background: #fff;
         color: var(--ink-soft);
         box-shadow: var(--shadow-sm);
+        white-space: nowrap;
+        max-width: 88vw;
       }
       .btn.no.fled { position: fixed; z-index: 50; transition: left 0.15s ease, top 0.15s ease; }
       .about {
@@ -184,7 +192,14 @@ import { GifPlayer } from '../gif-player';
         font-size: 0.95rem;
       }
       .about p { margin: 0.25rem 0; }
-      .about .small { font-size: 0.85rem; color: var(--ink-soft); margin-top: 0.3rem; }
+      .about .small { font-size: 0.9rem; color: var(--ink-soft); margin-top: 0.4rem; }
+      .car {
+        width: 100%;
+        margin-top: 0.6rem;
+        border-radius: 14px;
+        box-shadow: var(--shadow-sm);
+        display: block;
+      }
       @media (min-width: 720px) {
         .screen { gap: 0.6rem; }
         .question { font-size: 2.6rem; }
@@ -203,6 +218,7 @@ export class AskScreen implements OnInit, OnDestroy {
   readonly noIndex = signal(0);
   readonly fled = signal(false);
   readonly celebrating = signal(false);
+  readonly carError = signal(false);
   readonly pos = signal<{ x: number; y: number }>({ x: 0, y: 0 });
 
   readonly noTexts = [
@@ -246,11 +262,17 @@ export class AskScreen implements OnInit, OnDestroy {
 
   runAway(ev: Event): void {
     ev.preventDefault();
-    const pad = 16;
-    const bw = 150;
-    const bh = 56;
-    const x = Math.random() * (window.innerWidth - bw - pad * 2) + pad;
-    const y = Math.random() * (window.innerHeight - bh - pad * 2) + pad;
+    const el = ev.currentTarget as HTMLElement;
+    const rect = el.getBoundingClientRect();
+    const pad = 12;
+    const vw = document.documentElement.clientWidth;
+    const vh = document.documentElement.clientHeight;
+    // запас под то, что следующий текст станет чуть длиннее
+    const buffer = 48;
+    const maxX = Math.max(pad, vw - rect.width - pad - buffer);
+    const maxY = Math.max(pad, vh - rect.height - pad);
+    const x = Math.min(maxX, Math.max(pad, Math.random() * maxX));
+    const y = Math.min(maxY, Math.max(pad, Math.random() * maxY));
     this.pos.set({ x, y });
     this.fled.set(true);
     this.noIndex.update((i) => Math.min(i + 1, this.noTexts.length - 1));
