@@ -42,6 +42,18 @@ import { COMPLIMENTS, DateState } from '../date-state';
         </p>
         <p class="small">P.S. у меня есть машина — заеду за тобой сам 🚗</p>
       </div>
+
+      <div class="contacts">
+        <span class="contacts-label">Связаться со мной:</span>
+        <div class="contacts-links">
+          <a class="contact vk" href="https://vk.com/mr_maksim_maltsev" target="_blank" rel="noopener">
+            VK
+          </a>
+          <a class="contact tg" href="https://t.me/bigmax555" target="_blank" rel="noopener">
+            Telegram
+          </a>
+        </div>
+      </div>
     </section>
   `,
   styles: [
@@ -101,6 +113,24 @@ import { COMPLIMENTS, DateState } from '../date-state';
         font-weight: 600;
       }
       .about .small { font-size: 0.9rem; color: var(--ink-soft); margin-top: 0.4rem; }
+      .contacts { display: flex; flex-direction: column; align-items: center; gap: 0.5rem; margin-top: 0.3rem; }
+      .contacts-label { font-weight: 700; color: var(--ink-soft); font-size: 0.95rem; }
+      .contacts-links { display: flex; gap: 0.6rem; }
+      .contact {
+        display: inline-flex;
+        align-items: center;
+        gap: 0.4rem;
+        text-decoration: none;
+        font-weight: 800;
+        color: #fff;
+        padding: 0.55rem 1.2rem;
+        border-radius: 999px;
+        box-shadow: 0 6px 16px rgba(0, 0, 0, 0.18);
+        transition: transform 0.15s ease;
+      }
+      .contact:active { transform: scale(0.95); }
+      .contact.vk { background: #0077ff; }
+      .contact.tg { background: #2aabee; }
       @media (min-width: 720px) {
         .question { font-size: 2.6rem; }
         .avatar { width: 130px; height: 130px; }
