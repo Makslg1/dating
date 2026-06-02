@@ -8,7 +8,7 @@ import { COMPLIMENTS, DateState } from '../date-state';
     <section class="screen">
       <div class="hero">
         @if (!photoError()) {
-          <img class="avatar" src="maksim.jpg" alt="Максим" (error)="photoError.set(true)" />
+          <img class="avatar" [src]="photoSrc()" alt="Максим" (error)="photoError.set(true)" />
         } @else {
           <div class="avatar fallback">🙋‍♂️</div>
         }
@@ -141,6 +141,8 @@ import { COMPLIMENTS, DateState } from '../date-state';
 export class AskScreen implements OnInit, OnDestroy {
   readonly state = inject(DateState);
   readonly photoError = signal(false);
+  readonly photos = ['maksim.jpg', 'maksim2.jpg'];
+  readonly photoSrc = signal(this.photos[0]);
   readonly compliment = signal(COMPLIMENTS[0]);
   readonly noIndex = signal(0);
   readonly fled = signal(false);
@@ -159,6 +161,7 @@ export class AskScreen implements OnInit, OnDestroy {
 
   private timer: ReturnType<typeof setInterval> | undefined;
   private ci = 0;
+  private pi = 0;
 
   yesScale(): number {
     return Math.min(1 + this.noIndex() * 0.12, 1.8);
@@ -168,6 +171,8 @@ export class AskScreen implements OnInit, OnDestroy {
     this.timer = setInterval(() => {
       this.ci = (this.ci + 1) % COMPLIMENTS.length;
       this.compliment.set(COMPLIMENTS[this.ci]);
+      this.pi = (this.pi + 1) % this.photos.length;
+      this.photoSrc.set(this.photos[this.pi]);
     }, 2600);
   }
 
