@@ -8,11 +8,21 @@ import { DateState } from '../date-state';
       <h2>Когда тебе удобно? 🗓️</h2>
       <p class="hint">Доставка принцессы до двери на машине включена 🚗👑</p>
 
+      <div class="schedule">
+        <span class="sched-title">🕒 Когда я свободен:</span>
+        <div class="sched-rows">
+          <span><b>Пн · Ср · Пт</b> — после 20:00</span>
+          <span><b>Вт · Чт</b> — после 17:00</span>
+          <span><b>Сб · Вс</b> — весь день 🎉</span>
+        </div>
+      </div>
+
       <div class="days">
         @for (d of days; track d.iso) {
           <button class="chip day" [class.active]="state.dateIso() === d.iso" (click)="state.pickDate(d.iso)">
             <span class="dow">{{ d.dow }}</span>
             <span class="dnum">{{ d.label }}</span>
+            <span class="from">{{ d.from }}</span>
             @if (d.isToday) { <span class="today">сегодня</span> }
           </button>
         }
@@ -49,6 +59,16 @@ import { DateState } from '../date-state';
       .screen { display: flex; flex-direction: column; gap: 0.7rem; }
       h2 { font-size: 1.8rem; font-weight: 900; text-align: center; }
       .hint { text-align: center; color: var(--ink-soft); font-weight: 600; margin: 0; }
+      .schedule {
+        background: rgba(255, 255, 255, 0.7);
+        border-radius: 16px;
+        padding: 0.7rem 0.9rem;
+        margin: 0.3rem 0;
+      }
+      .sched-title { font-weight: 900; color: var(--rose); display: block; margin-bottom: 0.3rem; }
+      .sched-rows { display: flex; flex-direction: column; gap: 0.15rem; font-weight: 600; font-size: 0.95rem; }
+      .from { color: var(--rose); font-size: 0.72rem; font-weight: 800; margin-top: 0.1rem; }
+      .chip.active .from { color: var(--rose); }
       .avail {
         text-align: center;
         font-weight: 800;

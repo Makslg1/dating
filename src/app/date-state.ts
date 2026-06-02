@@ -15,6 +15,7 @@ export interface DayOption {
   dow: string;
   label: string;
   isToday: boolean;
+  from: string;
 }
 
 export interface Slot {
@@ -101,11 +102,14 @@ export class DateState {
       const d = new Date(base);
       d.setDate(base.getDate() + i);
       const iso = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+      const day = d.getDay();
+      const sh = this.startHour(day);
       out.push({
         iso,
-        dow: DOW[d.getDay()],
+        dow: DOW[day],
         label: `${d.getDate()} ${MON_SHORT[d.getMonth()]}`,
         isToday: i === 0,
+        from: day === 0 || day === 6 ? 'весь день' : `с ${sh}:00`,
       });
     }
     return out;

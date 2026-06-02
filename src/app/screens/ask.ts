@@ -67,8 +67,8 @@ import { COMPLIMENTS, DateState } from '../date-state';
       }
       .hero { display: flex; flex-direction: column; align-items: center; gap: 0.5rem; }
       .avatar {
-        width: 110px;
-        height: 110px;
+        width: 168px;
+        height: 168px;
         border-radius: 50%;
         object-fit: cover;
         border: 4px solid #fff;
@@ -133,7 +133,7 @@ import { COMPLIMENTS, DateState } from '../date-state';
       .contact.tg { background: #2aabee; }
       @media (min-width: 720px) {
         .question { font-size: 2.6rem; }
-        .avatar { width: 130px; height: 130px; }
+        .avatar { width: 210px; height: 210px; }
       }
     `,
   ],
