@@ -228,16 +228,16 @@ export class DoneScreen implements OnInit, OnDestroy {
       'Что планировалось': this.state.titlesFor(m.activities, m.customActivity),
     };
 
+    // Письмо — по возможности (оно уходит на сервере, даже если ответ не дочитался).
+    // Саму отмену применяем в любом случае, чтобы свидание точно пропало из списка.
     try {
-      const data = await this.post(payload);
-      if (!data.success) throw new Error(data.message || 'cancel failed');
-      this.state.cancelMeeting(m.id);
-      this.tick();
+      await this.post(payload);
     } catch {
-      this.cancelError.set('Не получилось отменить 😢 Проверь интернет и попробуй ещё раз.');
-    } finally {
-      this.cancelingId.set(null);
+      /* не блокируем отмену из-за сетевого сбоя при чтении ответа */
     }
+    this.state.cancelMeeting(m.id);
+    this.tick();
+    this.cancelingId.set(null);
   }
 
   async sendNote(): Promise<void> {
