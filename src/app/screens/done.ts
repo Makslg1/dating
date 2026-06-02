@@ -44,12 +44,6 @@ const WEB3FORMS_ACCESS_KEY = '840fe769-2c44-404f-b82d-46808569b683';
         </div>
         <p class="cd-label">До нашего свидания осталось:</p>
         <div class="countdown">{{ countdown() }}</div>
-
-        <p class="cd-label">А пока — пиши мне:</p>
-        <div class="contacts-links">
-          <a class="contact vk" href="https://vk.com/mr_maksim_maltsev" target="_blank" rel="noopener">VK</a>
-          <a class="contact tg" href="https://t.me/bigmax555" target="_blank" rel="noopener">Telegram</a>
-        </div>
       </section>
     }
   `,
@@ -96,17 +90,6 @@ const WEB3FORMS_ACCESS_KEY = '840fe769-2c44-404f-b82d-46808569b683';
         font-weight: 700;
         color: var(--rose);
       }
-      .contacts-links { display: flex; gap: 0.6rem; justify-content: center; }
-      .contact {
-        text-decoration: none;
-        font-weight: 800;
-        color: #fff;
-        padding: 0.55rem 1.2rem;
-        border-radius: 999px;
-        box-shadow: 0 6px 16px rgba(0, 0, 0, 0.18);
-      }
-      .contact.vk { background: #0077ff; }
-      .contact.tg { background: #2aabee; }
       @keyframes pop {
         0% { transform: scale(0); }
         70% { transform: scale(1.3); }
