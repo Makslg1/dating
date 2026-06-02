@@ -28,28 +28,28 @@ export const ACTIVITIES: Activity[] = [
     id: 'bike',
     emoji: '🚲',
     title: 'Покататься на велике',
-    img: 'https://images.unsplash.com/photo-1485965120184-e220f721d03e?w=640&h=420&fit=crop',
+    img: 'activities/bike.jpg',
     joke: 'У меня даже шлем есть… кажется. Догонишь — твоя победа 😄',
   },
   {
     id: 'park',
     emoji: '🌳',
     title: 'Погулять в парке',
-    img: 'https://images.unsplash.com/photo-1441974231531-c6227db76b6e?w=640&h=420&fit=crop',
+    img: 'activities/park.jpg',
     joke: 'Беру плед и термос, с тебя — хорошее настроение 🧺',
   },
   {
     id: 'sushi',
     emoji: '🍣',
     title: 'Сходить на суши',
-    img: 'https://images.unsplash.com/photo-1579871494447-9811cf80d66c?w=640&h=420&fit=crop',
+    img: 'activities/sushi.jpg',
     joke: 'Обещаю не воровать твои роллы… почти 🥢',
   },
   {
     id: 'restaurant',
     emoji: '🍽️',
     title: 'Сходить в ресторан',
-    img: 'https://images.unsplash.com/photo-1517248135467-4c7edcad34c4?w=640&h=420&fit=crop',
+    img: 'activities/restaurant.jpg',
     joke: 'Платит тот, у кого машина. То есть я 🚗',
   },
 ];
@@ -80,9 +80,51 @@ export class DateState {
   readonly sent = signal(false);
   readonly error = signal<string | null>(null);
 
+  private readonly STORAGE_KEY = 'natasha-date-v1';
+
+  constructor() {
+    this.restore();
+  }
+
+  private get storage(): Storage | null {
+    return typeof localStorage !== 'undefined' ? localStorage : null;
+  }
+
+  /** Сохраняем ответ, чтобы при повторном заходе сразу показать обратный отсчёт */
+  persist(): void {
+    this.storage?.setItem(
+      this.STORAGE_KEY,
+      JSON.stringify({
+        dateIso: this.dateIso(),
+        time: this.time(),
+        activities: this.activities(),
+        customActivity: this.customActivity(),
+        comment: this.comment(),
+      }),
+    );
+  }
+
+  private restore(): void {
+    try {
+      const raw = this.storage?.getItem(this.STORAGE_KEY);
+      if (!raw) return;
+      const d = JSON.parse(raw);
+      if (!d?.dateIso || !d?.time) return;
+      this.dateIso.set(d.dateIso);
+      this.time.set(d.time);
+      this.activities.set(Array.isArray(d.activities) ? d.activities : []);
+      this.customActivity.set(d.customActivity ?? '');
+      this.comment.set(d.comment ?? '');
+      this.sent.set(true);
+      this.step.set('done');
+    } catch {
+      /* битые данные — игнорируем */
+    }
+  }
+
   goto(s: Step): void {
     this.step.set(s);
-    window.scrollTo({ top: 0, behavior: 'smooth' });
+    if (typeof window !== 'undefined') window.scrollTo({ top: 0, behavior: 'smooth' });
   }
 
   pickDate(iso: string): void {

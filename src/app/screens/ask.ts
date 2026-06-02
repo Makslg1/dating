@@ -45,6 +45,10 @@ import { COMPLIMENTS, DateState } from '../date-state';
         </button>
       </div>
 
+      @if (noIndex() >= 2) {
+        <img class="please-meme" src="puss-in-boots-shrek.gif" alt="Ну пожалуйста" />
+      }
+
       <div class="about">
         <p>
           Я программист, так что собрать сайтик мне несложно 😎 Тебе — весело, а
@@ -52,6 +56,13 @@ import { COMPLIMENTS, DateState } from '../date-state';
         </p>
         <p class="small">P.S. у меня есть машина — заеду за тобой сам 🚗</p>
       </div>
+
+      @if (celebrating()) {
+        <div class="yes-overlay">
+          <img src="fist-pump-juvat-westendorp.gif" alt="Ура!" />
+          <p class="yes-text accent-font">Е-е-есть! 🎉</p>
+        </div>
+      }
     </section>
   `,
   styles: [
@@ -61,13 +72,13 @@ import { COMPLIMENTS, DateState } from '../date-state';
         display: flex;
         flex-direction: column;
         align-items: center;
-        gap: 0.6rem;
+        gap: 0.4rem;
       }
-      .hero { display: flex; flex-direction: column; align-items: center; gap: 0.5rem; }
-      .avatar-wrap { position: relative; width: 168px; height: 168px; }
+      .hero { display: flex; flex-direction: column; align-items: center; gap: 0.3rem; }
+      .avatar-wrap { position: relative; width: 132px; height: 132px; }
       .avatar {
-        width: 168px;
-        height: 168px;
+        width: 132px;
+        height: 132px;
         border-radius: 50%;
         object-fit: cover;
         border: 4px solid #fff;
@@ -89,23 +100,49 @@ import { COMPLIMENTS, DateState } from '../date-state';
         justify-content: center;
         font-size: 3rem;
       }
-      .name { font-weight: 800; color: var(--ink-soft); margin: 0; }
+      .name { font-weight: 800; color: var(--ink-soft); margin: 0; font-size: 0.95rem; }
       .compliment {
-        font-size: 1.7rem;
+        font-size: 1.4rem;
         color: var(--rose);
-        margin: 0.4rem 0;
-        min-height: 1.7rem;
+        margin: 0.3rem 0;
+        min-height: 1.4rem;
         transition: opacity 0.3s ease;
       }
-      .question { font-size: 2.1rem; font-weight: 900; }
+      .question { font-size: 1.8rem; font-weight: 900; margin: 0; }
       .buttons {
         display: flex;
         gap: 1rem;
         justify-content: center;
         flex-wrap: wrap;
-        margin: 1.2rem 0;
-        min-height: 60px;
+        margin: 0.9rem 0;
+        min-height: 56px;
       }
+      .please-meme {
+        width: 150px;
+        max-width: 60%;
+        border-radius: 14px;
+        box-shadow: 0 8px 20px rgba(0, 0, 0, 0.25);
+        animation: pop-in 0.4s ease;
+      }
+      @keyframes pop-in {
+        0% { transform: scale(0); }
+        70% { transform: scale(1.15); }
+        100% { transform: scale(1); }
+      }
+      .yes-overlay {
+        position: fixed;
+        inset: 0;
+        z-index: 100;
+        background: rgba(255, 255, 255, 0.92);
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        gap: 1rem;
+        animation: pop-in 0.35s ease;
+      }
+      .yes-overlay img { width: min(70vw, 320px); border-radius: 16px; }
+      .yes-text { font-size: 2.6rem; color: var(--rose); margin: 0; }
       .btn.no {
         background: #fff;
         color: var(--ink-soft);
@@ -115,15 +152,19 @@ import { COMPLIMENTS, DateState } from '../date-state';
       .about {
         background: rgba(255, 255, 255, 0.65);
         border-radius: 18px;
-        padding: 1rem 1.2rem;
+        padding: 0.8rem 1rem;
         max-width: 420px;
         color: var(--ink);
         font-weight: 600;
+        font-size: 0.95rem;
       }
-      .about .small { font-size: 0.9rem; color: var(--ink-soft); margin-top: 0.4rem; }
+      .about p { margin: 0.25rem 0; }
+      .about .small { font-size: 0.85rem; color: var(--ink-soft); margin-top: 0.3rem; }
       @media (min-width: 720px) {
+        .screen { gap: 0.6rem; }
         .question { font-size: 2.6rem; }
-        .avatar-wrap, .avatar { width: 210px; height: 210px; }
+        .compliment { font-size: 1.8rem; }
+        .avatar-wrap, .avatar { width: 200px; height: 200px; }
       }
     `,
   ],
@@ -136,6 +177,7 @@ export class AskScreen implements OnInit, OnDestroy {
   readonly compliment = signal(COMPLIMENTS[0]);
   readonly noIndex = signal(0);
   readonly fled = signal(false);
+  readonly celebrating = signal(false);
   readonly pos = signal<{ x: number; y: number }>({ x: 0, y: 0 });
 
   readonly noTexts = [
@@ -181,7 +223,8 @@ export class AskScreen implements OnInit, OnDestroy {
   }
 
   yes(): void {
-    confetti({ particleCount: 160, spread: 90, origin: { y: 0.6 } });
-    setTimeout(() => this.state.goto('when'), 450);
+    this.celebrating.set(true);
+    confetti({ particleCount: 180, spread: 100, origin: { y: 0.6 } });
+    setTimeout(() => this.state.goto('when'), 2000);
   }
 }
