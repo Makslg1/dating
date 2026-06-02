@@ -1,5 +1,9 @@
 <audio id="bg-music" src="music.mp3" loop preload="none"></audio>
 
+<div class="hearts" aria-hidden="true">
+  <span>♥</span><span>♥</span><span>♥</span><span>♥</span><span>♥</span><span>♥</span><span>♥</span>
+</div>
+
 <button class="music-btn" (click)="toggleMusic()" [attr.aria-label]="musicOn() ? 'Выключить музыку' : 'Включить музыку'">
   {{ musicOn() ? '🎵' : '🔇' }}
 </button>

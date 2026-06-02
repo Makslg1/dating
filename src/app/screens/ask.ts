@@ -32,7 +32,7 @@ import { GifPlayer } from '../gif-player';
       <h1 class="question">Наташа,<br />пойдёшь со мной<br />на свидание?</h1>
 
       <div class="buttons">
-        <button class="btn yes" [style.transform]="'scale(' + yesScale() + ')'" (click)="yes()">
+        <button class="btn yes" [style.fontSize.rem]="yesFontRem()" (click)="yes()">
           Да! ❤️
         </button>
         <button
@@ -83,8 +83,8 @@ import { GifPlayer } from '../gif-player';
         height: 132px;
         border-radius: 50%;
         object-fit: cover;
-        border: 4px solid #fff;
-        box-shadow: 0 10px 28px rgba(255, 77, 109, 0.4);
+        border: 5px solid #fff;
+        box-shadow: 0 0 0 2px rgba(214, 51, 108, 0.22), 0 16px 34px rgba(214, 51, 108, 0.32);
         background: var(--cream);
       }
       .avatar.layer {
@@ -102,28 +102,49 @@ import { GifPlayer } from '../gif-player';
         justify-content: center;
         font-size: 3rem;
       }
-      .name { font-weight: 800; color: var(--ink-soft); margin: 0; font-size: 0.95rem; }
+      .name {
+        font-weight: 800;
+        color: var(--ink-soft);
+        margin: 0;
+        font-size: 0.78rem;
+        letter-spacing: 0.14em;
+        text-transform: uppercase;
+      }
       .compliment {
-        font-size: 1.4rem;
-        color: var(--rose);
-        margin: 0.3rem 0;
-        min-height: 1.4rem;
+        font-size: 1.7rem;
+        color: var(--berry);
+        margin: 0.2rem 0;
+        min-height: 1.7rem;
         transition: opacity 0.3s ease;
       }
-      .question { font-size: 1.8rem; font-weight: 900; margin: 0; }
+      .question {
+        font-size: 2rem;
+        font-weight: 600;
+        margin: 0.1rem 0 0;
+        color: var(--ink);
+        line-height: 1.05;
+      }
       .buttons {
         display: flex;
-        gap: 1rem;
+        gap: 0.9rem;
         justify-content: center;
+        align-items: center;
         flex-wrap: wrap;
-        margin: 0.9rem 0;
-        min-height: 56px;
+        margin: 1.1rem 0 0.2rem;
+        min-height: 58px;
+      }
+      .btn.yes {
+        padding: 0.62em 1.5em;
+        line-height: 1;
+        transform-origin: center;
+        transition: font-size 0.28s cubic-bezier(0.34, 1.4, 0.64, 1), box-shadow 0.22s ease,
+          filter 0.2s ease, transform 0.18s ease;
       }
       .please-meme {
-        width: 150px;
-        max-width: 60%;
-        border-radius: 14px;
-        box-shadow: 0 8px 20px rgba(0, 0, 0, 0.25);
+        width: 160px;
+        max-width: 62%;
+        border-radius: 16px;
+        box-shadow: 0 10px 26px rgba(176, 38, 74, 0.32);
         animation: pop-in 0.4s ease;
       }
       @keyframes pop-in {
@@ -135,7 +156,8 @@ import { GifPlayer } from '../gif-player';
         position: fixed;
         inset: 0;
         z-index: 100;
-        background: rgba(255, 255, 255, 0.92);
+        background: rgba(255, 246, 240, 0.9);
+        backdrop-filter: blur(8px);
         display: flex;
         flex-direction: column;
         align-items: center;
@@ -143,19 +165,20 @@ import { GifPlayer } from '../gif-player';
         gap: 1rem;
         animation: pop-in 0.35s ease;
       }
-      .yes-overlay gif-player { width: min(70vw, 320px); border-radius: 16px; display: block; }
-      .yes-text { font-size: 2.6rem; color: var(--rose); margin: 0; }
+      .yes-overlay gif-player { width: min(70vw, 320px); border-radius: 18px; display: block; }
+      .yes-text { font-family: var(--font-accent); font-size: 3.2rem; color: var(--berry); margin: 0; }
       .btn.no {
         background: #fff;
         color: var(--ink-soft);
-        box-shadow: 0 6px 16px rgba(0, 0, 0, 0.12);
+        box-shadow: var(--shadow-sm);
       }
       .btn.no.fled { position: fixed; z-index: 50; transition: left 0.15s ease, top 0.15s ease; }
       .about {
-        background: rgba(255, 255, 255, 0.65);
+        background: rgba(255, 255, 255, 0.5);
+        border: 1px solid rgba(255, 255, 255, 0.7);
         border-radius: 18px;
-        padding: 0.8rem 1rem;
-        max-width: 420px;
+        padding: 0.85rem 1.05rem;
+        max-width: 430px;
         color: var(--ink);
         font-weight: 600;
         font-size: 0.95rem;
@@ -196,8 +219,9 @@ export class AskScreen implements OnInit, OnDestroy {
   private timer: ReturnType<typeof setInterval> | undefined;
   private ci = 0;
 
-  yesScale(): number {
-    return Math.min(1 + this.noIndex() * 0.12, 1.8);
+  /** Кнопка «Да» растёт через размер шрифта (em-падинги тянутся следом) — без наезда на соседей */
+  yesFontRem(): number {
+    return Math.min(1.05 + this.noIndex() * 0.16, 2.2);
   }
 
   ngOnInit(): void {
