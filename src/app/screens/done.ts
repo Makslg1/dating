@@ -47,9 +47,13 @@ const WEB3FORMS_URL = 'https://api.web3forms.com/submit';
               <p>🎯 {{ state.titlesFor(m.activities, m.customActivity) }}</p>
               @if (m.comment) { <p class="m-note">💬 {{ m.comment }}</p> }
               <p class="m-cd">⏳ {{ countdowns()[m.id] }}</p>
-              <button class="btn ghost cancel" [disabled]="cancelingId() === m.id" (click)="cancel(m)">
-                {{ cancelingId() === m.id ? 'Отменяю…' : '✕ Отменить это свидание' }}
-              </button>
+              @if (state.meetings().length > 1) {
+                <button class="btn ghost cancel" [disabled]="cancelingId() === m.id" (click)="cancel(m)">
+                  {{ cancelingId() === m.id ? 'Отменяю…' : '✕ Отменить это свидание' }}
+                </button>
+              } @else {
+                <p class="keep">Это свидание остаётся — без тебя никак 🥰</p>
+              }
             </div>
           }
         } @else {
@@ -128,6 +132,7 @@ const WEB3FORMS_URL = 'https://api.web3forms.com/submit';
         margin: 0.2rem 0;
       }
       .cancel { color: #b00038; font-weight: 800; align-self: center; padding: 0.4rem 0.8rem; }
+      .keep { color: var(--rose); font-weight: 700; margin: 0.2rem 0 0; font-size: 0.92rem; }
       .plan { width: 100%; }
       .cd-label { color: var(--ink-soft); font-weight: 700; margin: 0; }
       .reschedule {

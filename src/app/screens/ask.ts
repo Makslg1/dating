@@ -1,9 +1,11 @@
 import { Component, OnDestroy, OnInit, inject, signal } from '@angular/core';
 import confetti from 'canvas-confetti';
 import { COMPLIMENTS, DateState } from '../date-state';
+import { GifPlayer } from '../gif-player';
 
 @Component({
   selector: 'app-ask',
+  imports: [GifPlayer],
   template: `
     <section class="screen">
       <div class="hero">
@@ -46,7 +48,7 @@ import { COMPLIMENTS, DateState } from '../date-state';
       </div>
 
       @if (noIndex() >= 2) {
-        <img class="please-meme" src="puss-in-boots-shrek.gif" alt="Ну пожалуйста" />
+        <gif-player class="please-meme" src="puss-in-boots-shrek.gif" />
       }
 
       <div class="about">
@@ -59,7 +61,7 @@ import { COMPLIMENTS, DateState } from '../date-state';
 
       @if (celebrating()) {
         <div class="yes-overlay">
-          <img src="fist-pump-juvat-westendorp.gif" alt="Ура!" />
+          <gif-player src="fist-pump-juvat-westendorp.gif" />
           <p class="yes-text accent-font">Е-е-есть! 🎉</p>
         </div>
       }
@@ -141,7 +143,7 @@ import { COMPLIMENTS, DateState } from '../date-state';
         gap: 1rem;
         animation: pop-in 0.35s ease;
       }
-      .yes-overlay img { width: min(70vw, 320px); border-radius: 16px; }
+      .yes-overlay gif-player { width: min(70vw, 320px); border-radius: 16px; display: block; }
       .yes-text { font-size: 2.6rem; color: var(--rose); margin: 0; }
       .btn.no {
         background: #fff;
