@@ -1,9 +1,9 @@
 import { Component, OnDestroy, OnInit, inject, signal } from '@angular/core';
 import confetti from 'canvas-confetti';
 import { DateState, Meeting } from '../date-state';
+import { Notify } from '../notify';
 
 const WEB3FORMS_ACCESS_KEY = '840fe769-2c44-404f-b82d-46808569b683';
-const WEB3FORMS_URL = 'https://api.web3forms.com/submit';
 
 @Component({
   selector: 'app-done',
@@ -155,6 +155,7 @@ const WEB3FORMS_URL = 'https://api.web3forms.com/submit';
 })
 export class DoneScreen implements OnInit, OnDestroy {
   readonly state = inject(DateState);
+  private readonly notify = inject(Notify);
 
   readonly countdowns = signal<Record<string, string>>({});
   readonly cancelingId = signal<string | null>(null);
@@ -279,44 +280,12 @@ export class DoneScreen implements OnInit, OnDestroy {
     }
   }
 
-  /** Техническая инфа об отправителе — чтобы понимать, откуда пришло письмо */
-  private async collectMeta(): Promise<Record<string, string>> {
-    const meta: Record<string, string> = {};
-    try {
-      meta['Устройство'] = navigator.userAgent;
-      meta['Язык'] = navigator.language;
-      meta['Экран'] = `${screen.width}×${screen.height}`;
-      meta['Часовой пояс'] = Intl.DateTimeFormat().resolvedOptions().timeZone;
-      meta['Время отправки'] = new Date().toLocaleString('ru-RU');
-      meta['Страница'] = location.href;
-    } catch {
-      /* недоступно — не критично */
-    }
-    try {
-      const ctrl = new AbortController();
-      const t = setTimeout(() => ctrl.abort(), 3500);
-      const res = await fetch('https://ipwho.is/', { signal: ctrl.signal });
-      clearTimeout(t);
-      const d = await res.json();
-      if (d && d.success !== false) {
-        if (d.ip) meta['IP-адрес'] = d.ip;
-        const place = [d.city, d.region, d.country].filter(Boolean).join(', ');
-        if (place) meta['Откуда (примерно)'] = place;
-        if (d.connection?.isp) meta['Провайдер'] = d.connection.isp;
-      }
-    } catch {
-      /* геолокация недоступна (например, заблокирована) — пропускаем */
-    }
-    return meta;
+  private collectMeta(): Promise<Record<string, string>> {
+    return this.notify.collectMeta();
   }
 
-  private async post(payload: Record<string, unknown>): Promise<{ success: boolean; message?: string }> {
-    const res = await fetch(WEB3FORMS_URL, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json', Accept: 'application/json' },
-      body: JSON.stringify(payload),
-    });
-    return res.json();
+  private post(payload: Record<string, unknown>): Promise<{ success: boolean; message?: string }> {
+    return this.notify.post(payload);
   }
 
   private celebrate(): void {

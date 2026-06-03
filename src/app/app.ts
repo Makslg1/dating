@@ -1,5 +1,6 @@
 import { AfterViewInit, Component, OnDestroy, computed, inject, signal } from '@angular/core';
 import { DateState } from './date-state';
+import { Notify } from './notify';
 import { AskScreen } from './screens/ask';
 import { WhenScreen } from './screens/when';
 import { WhatScreen } from './screens/what';
@@ -13,6 +14,7 @@ import { DoneScreen } from './screens/done';
 })
 export class App implements AfterViewInit, OnDestroy {
   protected readonly state = inject(DateState);
+  private readonly notify = inject(Notify);
   protected readonly musicOn = signal(false);
 
   protected readonly steps = [
@@ -35,6 +37,9 @@ export class App implements AfterViewInit, OnDestroy {
   private readonly autoEvents = ['pointerdown', 'keydown', 'touchstart'];
 
   ngAfterViewInit(): void {
+    // Письмо «кто-то открыл страницу» — один раз за сессию, тихо в фоне.
+    void this.notify.pageOpened();
+
     const audio = this.audio();
     if (!audio) return;
     audio.volume = 0;
